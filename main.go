@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -45,7 +46,21 @@ func main() {
 		}
 	}()
 
-	slackSocketClient.Run()
+	go func() {
+		err := slackSocketClient.Run()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprintf(writer, "Hello World!")
+	})
+
+	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func handleMessage(githubApiClient *github.Client, slackApiClient *slack.Client, eventData *slackevents.MessageEvent) {
